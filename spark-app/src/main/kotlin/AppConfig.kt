@@ -30,6 +30,7 @@ fun PostgresConfig.toJdbcProperties(): Properties =
         put("user", user)
         put("password", password)
         put("driver", "org.postgresql.Driver")
+        put("stringtype", "unspecified")
     }
 
 fun ClickHouseConfig.toJdbcProperties(): Properties =
@@ -43,7 +44,7 @@ private fun env(name: String, default: String): String =
     System.getenv(name) ?: default
 
 object PostgresConfigLoader {
-    fun load(tableName: String) : PostgresConfig = PostgresConfig(
+    fun load(tableName: String = env("POSTGRES_TABLE", "mock_data_raw")) : PostgresConfig = PostgresConfig(
         host = env("POSTGRES_HOST", "db"),
         port = env("POSTGRES_PORT", "5432"),
         db = env("POSTGRES_DB", "lab2_db"),
