@@ -38,13 +38,6 @@ nbdist/
 # VS Code
 .vscode/
 
-# Local environment
-.env
-.env.*
-!.env.example
-.codex
-.codex/
-
 # Logs and JVM crash dumps
 *.log
 hs_err_pid*

@@ -21,6 +21,9 @@ data class ClickHouseConfig(
     val user: String,
     val password: String
 ) {
+    val adminJdbcUrl: String
+        get() = "jdbc:clickhouse://$host:$port/default"
+
     val jdbcUrl: String
         get() = "jdbc:clickhouse://$host:$port/$db"
 }

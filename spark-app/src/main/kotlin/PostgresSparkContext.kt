@@ -14,14 +14,16 @@ internal class PostgresSparkContext(
         .appName("BigDataSparkLab")
         .getOrCreate()
 
-    val rawData: Dataset<Row> = spark.read()
-        .format("jdbc")
-        .option("url", jdbcUrl)
-        .option("dbtable", config.table)
-        .option("user", config.user)
-        .option("password", config.password)
-        .option("driver", "org.postgresql.Driver")
-        .load()
+    val rawData: Dataset<Row> by lazy {
+        spark.read()
+            .format("jdbc")
+            .option("url", jdbcUrl)
+            .option("dbtable", config.table)
+            .option("user", config.user)
+            .option("password", config.password)
+            .option("driver", "org.postgresql.Driver")
+            .load()
+    }
 
     fun readTable(tableName: String): Dataset<Row> =
         spark.read()

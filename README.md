@@ -85,3 +85,121 @@
 7. Код Apache Spark трансформации данных из снежинки/звезды в отчеты в Neo4j.
 8. Код Apache Spark трансформации данных из снежинки/звезды в отчеты в MongoDB.
 9. Код Apache Spark трансформации данных из снежинки/звезды в отчеты в Valkey.
+
+## Запуск лабораторной работы
+
+Требования: установлен Docker с Docker Compose и JDK для сборки Gradle-проекта.
+
+Перед запуском проверьте .env в корне проекта. Текущая конфигурация использует:
+
+```
+POSTGRES_DB=lab2pgs
+POSTGRES_USER=gaalex
+POSTGRES_PASSWORD=gaalex
+
+CLICKHOUSE_DB=lab2chs
+CLICKHOUSE_USER=gaalex
+CLICKHOUSE_PASSWORD=gaalex
+CLICKHOUSE_PORT=8123
+```
+
+В репозиторий .env выложен :))
+
+Соберите Spark-приложение:
+
+```
+cd ./spark-app
+./gradlew clean build
+cd ..
+```
+
+Запустите инфраструктуру и Spark-job:
+
+```
+docker compose up -d --build
+```
+
+Сервис `spark-submit` одноразовый: он запускает Spark-job и после успешного выполнения завершается со статусом Exited (0). Остальные контейнеры (postgres, clickhouse, spark-master, spark-worker) остаются запущенными.
+
+Проверить состояние контейнеров можно проверить командой:
+
+```
+docker compose ps
+```
+
+Посмотреть логи Spark-job:
+
+```
+docker compose logs -f spark-submit
+```
+
+Spark UI доступен по адресу:
+
+```
+http://localhost:8082
+```
+
+
+Проверить, что исходные данные и таблицы звезды/снежинки заполнены можно, подключившись к базе данных через pgAdmin или dbeaver, используя данные из .env
+
+
+Подключиться к ClickHouse можно так же через dbeaver с данными из .env
+
+Проверить количество строк во всех ClickHouse-таблицах:
+
+```
+docker exec clickhouse clickhouse-client \
+  --user gaalex \
+  --password gaalex \
+  --database lab2chs \
+  --query "SELECT name, total_rows FROM system.tables WHERE database = 'lab2chs' ORDER BY name"
+```
+
+Ожидаемые таблицы:
+
+```
+report_customer_sales
+report_product_quality
+report_product_sales
+report_store_sales
+report_supplier_sales
+report_time_sales
+```
+
+Параметры подключения через DBeaver:
+
+```
+Host: localhost
+Port: 8123
+Database: lab2chs
+User: gaalex
+Password: gaalex
+```
+
+JDBC URL:
+
+```
+jdbc:clickhouse://localhost:8123/lab2chs
+```
+
+## Повторный запуск
+
+Если код Spark изменился, пересоберите jar и перезапустите `spark-submit`:
+
+```
+cd spark-app
+./gradlew clean build
+cd ..
+docker compose up --build --force-recreate spark-submit
+```
+
+Приложение перед загрузкой отчетов очищает ClickHouse-витрины командой `TRUNCATE`, поэтому повторный запуск не должен дублировать строки в ClickHouse.
+
+Если нужно полностью пересоздать PostgreSQL и ClickHouse с нуля надо удалить docker volumes:
+
+```
+docker compose down -v
+docker compose up -d --build
+```
+
+Команда `docker compose down -v` удаляет данные PostgreSQL и ClickHouse, после чего init-скрипты из `sql/init` и `sql/clickhouse` выполнятся заново.
